@@ -114,27 +114,37 @@ class MM:
     def Register():
         return MM.gen_reg.pop(0)
 
-def max_bits128(func_name, int_size, diff_code,  in_ptr, in_offset, seed_ptr):
-    with Function(func_name, (in_ptr, in_offset, seed_ptr), uint8_t):
+def max_bits128(func_name, int_size, diff_code):
+
+    array_ptr = Argument(ptr(size_t), name='in')
+    offset = Argument(ptrdiff_t, name='offset')
+    seed_ptr = Argument(ptr(uint8_t), name='seed')
+
+    with Function(func_name, (array_ptr, offset, seed_ptr), uint8_t):
         MM.CLEAR()
 
         inp = MM.Register()
         inp_offset = MM.Register()
-        seedp = MM.Register()
 
-        LOAD.ARGUMENT(inp, in_ptr)
-        LOAD.ARGUMENT(inp_offset, in_offset)
-        LOAD.ARGUMENT(seedp, seed_ptr)
+        LOAD.ARGUMENT(inp, array_ptr)
+        LOAD.ARGUMENT(inp_offset, offset)
 
-        # move array to end of block
+        # Move array to end of block
         inp = add_offset(int_size, inp, inp_offset)
         ADD(inp, 16*(int_size-1))
 
-        # store the last vector
-        last = MM.XMMRegister()
-        MOVDQA(last, [inp])
+        last = None
+        seedp = None
+        if diff_code:
+            # Initialize seed
+            seedp = MM.Register()
+            LOAD.ARGUMENT(seedp, seed_ptr)
 
-        # iterate from the end to
+            # Store the last vector
+            last = MM.XMMRegister()
+            MOVDQA(last, [inp])
+
+        # Iterate from the end to
         # the beginning of the block
         mm = MM(int_size, diff_code, inp)
         for _ in range(0, int_size-1):
@@ -147,18 +157,15 @@ def max_bits128(func_name, int_size, diff_code,  in_ptr, in_offset, seed_ptr):
         accumulators = mm.ACCUMULATE(mm.DELTA(out, [seedp]))
         result = mm.MAXBITS(accumulators)
 
-        # move the last vector to seed
+        # Move the last vector to seed
         if diff_code:
             MOVDQA([seedp], last)
 
         RETURN(result.as_low_byte)
 
-array_arg = Argument(ptr(size_t), name='in')
-offset_arg = Argument(ptrdiff_t, name='offset')
-seed_arg = Argument(ptr(uint8_t), name='seed')
+# Generate code
+max_bits128('maxBits128_64', 64, False)
+max_bits128('maxBits128_32', 32, False)
 
-max_bits128('maxBits128_64', 64, False, array_arg, offset_arg, seed_arg)
-max_bits128('maxBits128_32', 32, False, array_arg, offset_arg, seed_arg)
-
-max_bits128('dmaxBits128_64', 64, True, array_arg, offset_arg, seed_arg)
-max_bits128('dmaxBits128_32', 32, True, array_arg, offset_arg, seed_arg)
+max_bits128('dmaxBits128_64', 64, True)
+max_bits128('dmaxBits128_32', 32, True)

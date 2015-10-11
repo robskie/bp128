@@ -31,54 +31,31 @@ func (s intSlice) Swap(i, j int) {
 	v.Index(j).SetUint(ii)
 }
 
-func testPackUnpack32(t *testing.T, nbits int, isDiffCode bool) bool {
+func testPackUnpackAsm(t *testing.T, intSize, nbits int, isDiffCode bool) bool {
 	const blockSize = 128
-
-	max := 1 << uint(nbits)
-	in := makeAlignedSlice([]uint32{}, blockSize)
-	out := makeAlignedSlice([]uint32{}, blockSize)
-	zip := makeAlignedBytes((nbits * blockSize) / 8)
-
-	for i := 0; i < blockSize; i++ {
-		in.Index(i).SetUint(uint64(rand.Intn(max)))
-	}
-	sort.Sort(intSlice(in))
-
-	seed := makeAlignedBytes(16)
-	copy(seed, convertToBytes(32, in.Slice(0, 4)))
-
-	inAddr := in.Pointer()
-	outAddr := out.Pointer()
 
 	fpack := fpack32
 	funpack := funpack32
-	if isDiffCode {
-		fpack = fdpack32
-		funpack = fdunpack32
-	}
-
-	fpack[nbits](inAddr, &zip[0], 0, &seed[0])
-
-	copy(seed, convertToBytes(32, in.Slice(0, 4)))
-	funpack[nbits](&zip[0], outAddr, 0, &seed[0])
-
-	equal := false
-	for i := 0; i < blockSize; i++ {
-		equal = assert.Equal(t, in.Index(i).Uint(), out.Index(i).Uint())
-		if !equal {
-			break
+	var sliceType interface{}
+	if intSize == 64 {
+		fpack = fpack64
+		funpack = funpack64
+		sliceType = []uint64{}
+		if isDiffCode {
+			fpack = fdpack64
+			funpack = fdunpack64
+		}
+	} else if intSize == 32 {
+		sliceType = []uint32{}
+		if isDiffCode {
+			fpack = fdpack32
+			funpack = fdunpack32
 		}
 	}
 
-	return equal
-}
-
-func testPackUnpack64(t *testing.T, nbits int, isDiffCode bool) bool {
-	const blockSize = 128
-
 	max := 1 << uint(nbits)
-	in := makeAlignedSlice([]uint64{}, blockSize)
-	out := makeAlignedSlice([]uint64{}, blockSize)
+	in := makeAlignedSlice(sliceType, blockSize)
+	out := makeAlignedSlice(sliceType, blockSize)
 	zip := makeAlignedBytes((nbits * blockSize) / 8)
 
 	for i := 0; i < blockSize; i++ {
@@ -91,22 +68,16 @@ func testPackUnpack64(t *testing.T, nbits int, isDiffCode bool) bool {
 	}
 	sort.Sort(intSlice(in))
 
+	nslice := blockSize / intSize
 	seed := makeAlignedBytes(16)
-	copy(seed, convertToBytes(64, in.Slice(0, 2)))
+	copy(seed, convertToBytes(intSize, in.Slice(0, nslice)))
 
 	inAddr := in.Pointer()
 	outAddr := out.Pointer()
 
-	fpack := fpack64
-	funpack := funpack64
-	if isDiffCode {
-		fpack = fdpack64
-		funpack = fdunpack64
-	}
-
 	fpack[nbits](inAddr, &zip[0], 0, &seed[0])
 
-	copy(seed, convertToBytes(64, in.Slice(0, 2)))
+	copy(seed, convertToBytes(intSize, in.Slice(0, nslice)))
 	funpack[nbits](&zip[0], outAddr, 0, &seed[0])
 
 	equal := false
@@ -122,7 +93,7 @@ func testPackUnpack64(t *testing.T, nbits int, isDiffCode bool) bool {
 
 func TestPackUnpackAsm32(t *testing.T) {
 	for i := 1; i <= 32; i++ {
-		if !testPackUnpack32(t, i, false) {
+		if !testPackUnpackAsm(t, 32, i, false) {
 			fmt.Printf("Pack-unpack for bit size %d failed\n", i)
 			break
 		}
@@ -131,7 +102,7 @@ func TestPackUnpackAsm32(t *testing.T) {
 
 func TestPackUnpackAsm64(t *testing.T) {
 	for i := 1; i <= 64; i++ {
-		if !testPackUnpack64(t, i, false) {
+		if !testPackUnpackAsm(t, 64, i, false) {
 			fmt.Printf("Pack-unpack for bit size %d failed\n", i)
 			break
 		}
@@ -140,7 +111,7 @@ func TestPackUnpackAsm64(t *testing.T) {
 
 func TestDeltaPackUnpackAsm32(t *testing.T) {
 	for i := 1; i <= 32; i++ {
-		if !testPackUnpack32(t, i, true) {
+		if !testPackUnpackAsm(t, 32, i, true) {
 			fmt.Printf("Pack-unpack for bit size %d failed\n", i)
 			break
 		}
@@ -149,7 +120,7 @@ func TestDeltaPackUnpackAsm32(t *testing.T) {
 
 func TestDeltaPackUnpackAsm64(t *testing.T) {
 	for i := 1; i <= 64; i++ {
-		if !testPackUnpack64(t, i, true) {
+		if !testPackUnpackAsm(t, 64, i, true) {
 			fmt.Printf("Pack-unpack for bit size %d failed\n", i)
 			break
 		}
@@ -169,8 +140,8 @@ var getData32 = func() func() []uint32 {
 	}
 
 	ndata := binary.LittleEndian.Uint32(buf)
-
 	data := make([]uint32, ndata)
+
 	for i := range data {
 		_, err = f.Read(buf)
 		if err != nil {
@@ -225,7 +196,6 @@ func TestDeltaPackUnpack32(t *testing.T) {
 
 func TestDeltaPackUnpack64(t *testing.T) {
 	data := getData64()
-	data = data[:128]
 
 	var out []uint64
 	packed := DeltaPackInts(data)

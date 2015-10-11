@@ -234,8 +234,8 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 	iseed := makeAlignedBytes(16)
 
 	nslice := min(vin.Len(), blockSize/intSize)
-	copy(seed, convertToBytes(intSize, vin.Slice(0, nslice)))
-	copy(iseed, seed)
+	copy(iseed, convertToBytes(intSize, vin.Slice(0, nslice)))
+	copy(seed, iseed)
 
 	if !isAligned(intSize, uintptr(inAddr), 0) {
 		vin = alignSlice(intSize, vin)
@@ -281,8 +281,9 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 
 		for _, sz := range bs {
 			fpack[sz](uintptr(inAddr), &out[cout], cin, &seed[0])
-			cout += (int(sz) * blockSize) / 8
+
 			cin += blockSize
+			cout += (int(sz) * blockSize) / 8
 		}
 	}
 
@@ -293,8 +294,9 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 
 		for _, sz := range bitSizes {
 			fpack[sz](uintptr(inAddr), &out[cout], cin, &seed[0])
-			cout += (int(sz) * blockSize) / 8
+
 			cin += blockSize
+			cout += (int(sz) * blockSize) / 8
 		}
 	}
 
@@ -361,7 +363,6 @@ func unpack(in *PackedInts, out interface{}) {
 		} else {
 			vout = makeAlignedSlice(vout.Interface(), length)
 			outAddr = unsafe.Pointer(vout.Pointer())
-
 			outp.Elem().Set(vout)
 		}
 	}
@@ -369,7 +370,6 @@ func unpack(in *PackedInts, out interface{}) {
 	if !isAligned(intSize, uintptr(outAddr), 0) {
 		vout = alignSlice(intSize, vout)
 		outAddr = unsafe.Pointer(vout.Pointer())
-
 		outp.Elem().Set(vout)
 	}
 

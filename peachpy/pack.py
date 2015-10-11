@@ -127,31 +127,41 @@ class MM:
         return MM.gen_reg.pop(0)
 
 
-def pack(func_name, int_size, diff_code, bit_size,  in_ptr, out_ptr, in_offset, seed_ptr):
+def pack(func_name, int_size, diff_code, bit_size):
+
+    in_ptr = Argument(ptr(size_t), name='in')
+    out_ptr = Argument(ptr(uint8_t), name='out')
+    in_offset = Argument(ptrdiff_t, name='offset')
+    seed_ptr = Argument(ptr(uint8_t), name='seed')
+
     with Function(func_name, (in_ptr, out_ptr, in_offset, seed_ptr)):
         MM.CLEAR()
 
         inp = MM.Register()
         outp = MM.Register()
         inp_offset = MM.Register()
-        seedp = MM.Register()
 
         LOAD.ARGUMENT(inp, in_ptr)
         LOAD.ARGUMENT(outp, out_ptr)
         LOAD.ARGUMENT(inp_offset, in_offset)
-        LOAD.ARGUMENT(seedp, seed_ptr)
 
-        # move input array to end of block
+        # Move input array to end of block
         inp = add_offset(int_size, inp, inp_offset)
         ADD(inp, 16*(int_size-1))
 
-        # store the last vector
-        last = MM.XMMRegister()
-        MOVDQA(last, [inp])
-
-        # move output array to end of block
+        # Move output array to end of block
         if bit_size > 1:
             ADD(outp, 16*(bit_size-1))
+
+        last = None
+        seedp = None
+        if diff_code:
+            seedp = MM.Register()
+            LOAD.ARGUMENT(seedp, seed_ptr)
+
+            # Store the last vector
+            last = MM.XMMRegister()
+            MOVDQA(last, [inp])
 
         i = bit_size
         out_reg = None
@@ -184,23 +194,19 @@ def pack(func_name, int_size, diff_code, bit_size,  in_ptr, out_ptr, in_offset, 
                 mm.STORE(out_reg)
                 i = bit_size
 
-        # move the last vector to seed
+        # Move the last vector to seed
         if diff_code:
             MOVDQA([seedp], last)
 
         RETURN()
 
-input_arg = Argument(ptr(size_t), name='in')
-output_arg = Argument(ptr(uint8_t), name='out')
-input_idx = Argument(ptrdiff_t, name='inOffset')
-seed_arg = Argument(ptr(uint8_t), name='seed')
+# Generate code
+for bs in range(1, 33):
+    pack('pack32_'+str(bs), 32, False, bs)
+for bs in range(1, 65):
+    pack('pack64_'+str(bs), 64, False, bs)
 
 for bs in range(1, 33):
-    pack('pack32_'+str(bs), 32, False, bs, input_arg, output_arg, input_idx, seed_arg)
+    pack('dpack32_'+str(bs), 32, True, bs)
 for bs in range(1, 65):
-    pack('pack64_'+str(bs), 64, False, bs, input_arg, output_arg, input_idx, seed_arg)
-
-for bs in range(1, 33):
-    pack('dpack32_'+str(bs), 32, True, bs, input_arg, output_arg, input_idx, seed_arg)
-for bs in range(1, 65):
-    pack('dpack64_'+str(bs), 64, True, bs, input_arg, output_arg, input_idx, seed_arg)
+    pack('dpack64_'+str(bs), 64, True, bs)

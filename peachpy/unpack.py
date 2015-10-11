@@ -142,7 +142,13 @@ class MM:
     def Register():
         return MM.gen_reg.pop(0)
 
-def unpack(func_name, int_size, diff_code, bit_size, in_ptr, out_ptr, out_offset, seed_ptr):
+def unpack(func_name, int_size, diff_code, bit_size):
+
+    in_ptr = Argument(ptr(uint8_t), name='in')
+    out_ptr = Argument(ptr(size_t), name='out')
+    out_offset = Argument(ptrdiff_t, name='offset')
+    seed_ptr = Argument(ptr(uint8_t), name='seed')
+
     with Function(func_name, (in_ptr, out_ptr, out_offset, seed_ptr)):
         MM.CLEAR()
 
@@ -214,17 +220,13 @@ def unpack(func_name, int_size, diff_code, bit_size, in_ptr, out_ptr, out_offset
 
         RETURN()
 
-input_arg = Argument(ptr(uint8_t), name='in')
-output_arg = Argument(ptr(size_t), name='out')
-output_idx = Argument(ptrdiff_t, name='outOffset')
-seed_arg = Argument(ptr(uint8_t), name='seed')
+# Generate code
+for bs in range(1, 33):
+    unpack('unpack32_'+str(bs), 32, False, bs)
+for bs in range(1, 65):
+    unpack('unpack64_'+str(bs), 64, False, bs)
 
 for bs in range(1, 33):
-    unpack('unpack32_'+str(bs), 32, False, bs, input_arg, output_arg, output_idx, seed_arg)
+    unpack('dunpack32_'+str(bs), 32, True, bs)
 for bs in range(1, 65):
-    unpack('unpack64_'+str(bs), 64, False, bs, input_arg, output_arg, output_idx, seed_arg)
-
-for bs in range(1, 33):
-    unpack('dunpack32_'+str(bs), 32, True, bs, input_arg, output_arg, output_idx, seed_arg)
-for bs in range(1, 65):
-    unpack('dunpack64_'+str(bs), 64, True, bs, input_arg, output_arg, output_idx, seed_arg)
+    unpack('dunpack64_'+str(bs), 64, True, bs)
