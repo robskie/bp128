@@ -28,17 +28,13 @@ class MM:
 
         self.nbuffer = 4
         self.buffer = []
-        self.copies = [None]
         self.output_registers = []
 
-        self.in_addr = []
+        self.in_addr = [[in_ptr-(i*16)] for i in range(0, self.int_size)]
         if diff_code:
             self.in_addr.append([seed_ptr])
         else:
             self.in_addr.append(None)
-
-        addr = [[in_ptr+(i*16)] for i in range(0, self.int_size)]
-        self.in_addr.extend(addr)
 
     def LOAD(self):
         if len(self.buffer) == 0:
@@ -50,25 +46,6 @@ class MM:
             for i in range(0, end):
                 if self.in_addr[0] is not None:
                     MOVDQA(self.buffer[i], self.in_addr.pop(0))
-                else:
-                    self.xmm_reg.append(self.buffer[i])
-                    self.buffer[i] = self.in_addr.pop(0)
-
-            if self.diff_code:
-                if len(self.xmm_reg) < self.nbuffer:
-                    self.OR(self.output_registers)
-
-                start = 0
-                if len(self.copies) == 1 and self.copies[0] is None:
-                    self.copies.pop()
-                    start = 1
-
-                assert len(self.copies) == 0
-                self.copies = [self.xmm_reg.pop(0) for _ in range(start, end)]
-                for i in range(start, end):
-                    xmm = self.copies.pop(0)
-                    MOVDQA(xmm, self.buffer[i])
-                    self.copies.append(xmm)
 
         return self.buffer.pop(0)
 
@@ -106,7 +83,7 @@ class MM:
         return self.output_registers
 
     def STORE(self, xmm):
-        MOVDQA([self.outp+self.cout], xmm)
+        MOVDQA([self.outp-self.cout], xmm)
         self.cout += 16
 
         self.output_registers = []
@@ -121,18 +98,13 @@ class MM:
         return xmm_copy
 
     def DELTA(self, dst, src):
-        dst_copy = dst
         if self.diff_code:
-            dst_copy = self.copies.pop(0)
             if self.int_size == 64:
                 PSUBQ(dst, src)
             elif self.int_size == 32:
                 PSUBD(dst, src)
 
-        if self.diff_code:
-            self.xmm_reg.append(src)
-
-        self.buffer.insert(0, dst_copy)
+        self.buffer.insert(0, src)
         return dst
 
     @staticmethod
@@ -168,41 +140,53 @@ def pack(func_name, int_size, diff_code, bit_size,  in_ptr, out_ptr, in_offset, 
         LOAD.ARGUMENT(outp, out_ptr)
         LOAD.ARGUMENT(inp_offset, in_offset)
         LOAD.ARGUMENT(seedp, seed_ptr)
-        inp = add_offset(int_size, inp, inp_offset)
 
-        i = 0
+        # move input array to end of block
+        inp = add_offset(int_size, inp, inp_offset)
+        ADD(inp, 16*(int_size-1))
+
+        # store the last vector
+        last = MM.XMMRegister()
+        MOVDQA(last, [inp])
+
+        # move output array to end of block
+        if bit_size > 1:
+            ADD(outp, 16*(bit_size-1))
+
+        i = bit_size
         out_reg = None
         mm = MM(int_size, diff_code, inp, outp, seedp)
-        for k in range(0, bit_size):
-            while i+bit_size <= int_size:
+        for _ in range(0, bit_size):
+            while i <= int_size:
                 in1 = mm.LOAD()
                 in2 = mm.LOAD()
-                out_reg = mm.DELTA(in2, in1)
-                out_reg = mm.SHL(out_reg, i)
+                out_reg = mm.DELTA(in1, in2)
+                out_reg = mm.SHL(out_reg, int_size-i)
 
                 i += bit_size
 
-            if i < int_size:
+            if i-bit_size < int_size:
                 in1 = mm.LOAD()
                 in2 = mm.LOAD()
-                out_reg = mm.DELTA(in2, in1)
+                out_reg = mm.DELTA(in1, in2)
                 out_copy = mm.COPY(out_reg)
 
-                out_reg = mm.SHL(out_reg, i)
+                out_reg = mm.SHR(out_reg, i-int_size)
                 out_reg = mm.OR(out_reg)
                 mm.STORE(out_reg)
 
-                mm.SHR(out_copy, int_size-i)
-                i += bit_size - int_size
+                i -= int_size
+                out_reg = mm.SHL(out_copy, int_size-i)
+                i += bit_size
 
             else:
                 out_reg = mm.OR(out_reg)
                 mm.STORE(out_reg)
-                i = 0
+                i = bit_size
 
         # move the last vector to seed
         if diff_code:
-            MOVDQA([seedp], mm.LOAD())
+            MOVDQA([seedp], last)
 
         RETURN()
 
