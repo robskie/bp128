@@ -122,35 +122,32 @@ func benchmarkUnpack(trials int,
 		packed[i] = fpack(c)
 	}
 
+	var out interface{}
 	const alignment = 16
 	const chunkSize = 262144
-	outChunks := make([]interface{}, len(chunks.data))
 	if chunks.intSize == 32 {
-		for i := range outChunks {
-			out := make([]uint32, (chunkSize/4)+alignment)
-			outChunks[i] = &out
-		}
+		o := make([]uint32, (chunkSize/4)+alignment)
+		out = &o
 	} else if chunks.intSize == 64 {
-		for i := range outChunks {
-			out := make([]uint64, (chunkSize/8)+alignment)
-			outChunks[i] = &out
-		}
+		o := make([]uint64, (chunkSize/8)+alignment)
+		out = &o
 	}
 
 	times := make([]int, trials)
 	for i := range times {
 		start := time.Now()
-		for i, p := range packed {
-			funpack(p, outChunks[i])
+		for _, p := range packed {
+			funpack(p, out)
 		}
 		times[i] = int(time.Since(start).Nanoseconds())
 	}
 
 	// Check if both input and output are equal
 	for i, c := range chunks.data {
-		vc := reflect.ValueOf(c)
-		vo := reflect.ValueOf(outChunks[i]).Elem()
+		funpack(packed[i], out)
 
+		vc := reflect.ValueOf(c)
+		vo := reflect.ValueOf(out).Elem()
 		for j := 0; j < vc.Len(); j++ {
 			if vc.Index(j).Uint() != vo.Index(j).Uint() {
 				panic("whoops! something went wrong")

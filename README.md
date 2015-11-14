@@ -39,12 +39,12 @@ go run benchmark.go
 Here are the results.
 
 ```
-BenchmarkPack32               892 mis
-BenchmarkUnPack32            1420 mis
-BenchmarkDeltaPack32         1131 mis
-BenchmarkDeltaUnPack32       1731 mis
-BenchmarkPack64               509 mis
-BenchmarkUnPack64             829 mis
-BenchmarkDeltaPack64          565 mis
-BenchmarkDeltaUnPack64        926 mis
+BenchmarkPack32               894 mis
+BenchmarkUnPack32            2279 mis
+BenchmarkDeltaPack32         1163 mis
+BenchmarkDeltaUnPack32       3443 mis
+BenchmarkPack64               511 mis
+BenchmarkUnPack64            1596 mis
+BenchmarkDeltaPack64          577 mis
+BenchmarkDeltaUnPack64       2265 mis
 ```
