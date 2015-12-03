@@ -93,6 +93,10 @@ class MM:
         BSR(result, bits)
         ADD(result, 1)
 
+        # Return zero if bits is zero
+        TEST(bits, bits)
+        CMOVZ(result, bits)
+
         return result
 
     @staticmethod

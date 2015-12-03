@@ -17,7 +17,7 @@ import (
 )
 
 var fpack32 = []func(in uintptr, out *byte, inOffset int, seed *byte){
-	nil, pack32_1, pack32_2, pack32_3, pack32_4, pack32_5, pack32_6,
+	pack32_0, pack32_1, pack32_2, pack32_3, pack32_4, pack32_5, pack32_6,
 	pack32_7, pack32_8, pack32_9, pack32_10, pack32_11, pack32_12, pack32_13,
 	pack32_14, pack32_15, pack32_16, pack32_17, pack32_18, pack32_19, pack32_20,
 	pack32_21, pack32_22, pack32_23, pack32_24, pack32_25, pack32_26, pack32_27,
@@ -25,7 +25,7 @@ var fpack32 = []func(in uintptr, out *byte, inOffset int, seed *byte){
 }
 
 var fdpack32 = []func(in uintptr, out *byte, inOffset int, seed *byte){
-	nil, dpack32_1, dpack32_2, dpack32_3, dpack32_4, dpack32_5,
+	dpack32_0, dpack32_1, dpack32_2, dpack32_3, dpack32_4, dpack32_5,
 	dpack32_6, dpack32_7, dpack32_8, dpack32_9, dpack32_10, dpack32_11,
 	dpack32_12, dpack32_13, dpack32_14, dpack32_15, dpack32_16, dpack32_17,
 	dpack32_18, dpack32_19, dpack32_20, dpack32_21, dpack32_22, dpack32_23,
@@ -34,7 +34,7 @@ var fdpack32 = []func(in uintptr, out *byte, inOffset int, seed *byte){
 }
 
 var funpack32 = []func(in *byte, out uintptr, outOffset int, seed *byte){
-	nil, unpack32_1, unpack32_2, unpack32_3, unpack32_4, unpack32_5,
+	unpack32_0, unpack32_1, unpack32_2, unpack32_3, unpack32_4, unpack32_5,
 	unpack32_6, unpack32_7, unpack32_8, unpack32_9, unpack32_10, unpack32_11,
 	unpack32_12, unpack32_13, unpack32_14, unpack32_15, unpack32_16, unpack32_17,
 	unpack32_18, unpack32_19, unpack32_20, unpack32_21, unpack32_22, unpack32_23,
@@ -43,7 +43,7 @@ var funpack32 = []func(in *byte, out uintptr, outOffset int, seed *byte){
 }
 
 var fdunpack32 = []func(in *byte, out uintptr, outOffset int, seed *byte){
-	nil, dunpack32_1, dunpack32_2, dunpack32_3, dunpack32_4,
+	dunpack32_0, dunpack32_1, dunpack32_2, dunpack32_3, dunpack32_4,
 	dunpack32_5, dunpack32_6, dunpack32_7, dunpack32_8, dunpack32_9,
 	dunpack32_10, dunpack32_11, dunpack32_12, dunpack32_13, dunpack32_14,
 	dunpack32_15, dunpack32_16, dunpack32_17, dunpack32_18, dunpack32_19,
@@ -53,7 +53,7 @@ var fdunpack32 = []func(in *byte, out uintptr, outOffset int, seed *byte){
 }
 
 var fpack64 = []func(in uintptr, out *byte, inOffset int, seed *byte){
-	nil, pack64_1, pack64_2, pack64_3, pack64_4, pack64_5, pack64_6,
+	pack64_0, pack64_1, pack64_2, pack64_3, pack64_4, pack64_5, pack64_6,
 	pack64_7, pack64_8, pack64_9, pack64_10, pack64_11, pack64_12, pack64_13,
 	pack64_14, pack64_15, pack64_16, pack64_17, pack64_18, pack64_19, pack64_20,
 	pack64_21, pack64_22, pack64_23, pack64_24, pack64_25, pack64_26, pack64_27,
@@ -66,7 +66,7 @@ var fpack64 = []func(in uintptr, out *byte, inOffset int, seed *byte){
 }
 
 var fdpack64 = []func(in uintptr, out *byte, inOffset int, seed *byte){
-	nil, dpack64_1, dpack64_2, dpack64_3, dpack64_4, dpack64_5,
+	dpack64_0, dpack64_1, dpack64_2, dpack64_3, dpack64_4, dpack64_5,
 	dpack64_6, dpack64_7, dpack64_8, dpack64_9, dpack64_10, dpack64_11,
 	dpack64_12, dpack64_13, dpack64_14, dpack64_15, dpack64_16, dpack64_17,
 	dpack64_18, dpack64_19, dpack64_20, dpack64_21, dpack64_22, dpack64_23,
@@ -80,7 +80,7 @@ var fdpack64 = []func(in uintptr, out *byte, inOffset int, seed *byte){
 }
 
 var funpack64 = []func(in *byte, out uintptr, outOffset int, seed *byte){
-	nil, unpack64_1, unpack64_2, unpack64_3, unpack64_4, unpack64_5,
+	unpack64_0, unpack64_1, unpack64_2, unpack64_3, unpack64_4, unpack64_5,
 	unpack64_6, unpack64_7, unpack64_8, unpack64_9, unpack64_10, unpack64_11,
 	unpack64_12, unpack64_13, unpack64_14, unpack64_15, unpack64_16, unpack64_17,
 	unpack64_18, unpack64_19, unpack64_20, unpack64_21, unpack64_22, unpack64_23,
@@ -94,7 +94,7 @@ var funpack64 = []func(in *byte, out uintptr, outOffset int, seed *byte){
 }
 
 var fdunpack64 = []func(in *byte, out uintptr, outOffset int, seed *byte){
-	nil, dunpack64_1, dunpack64_2, dunpack64_3, dunpack64_4,
+	dunpack64_0, dunpack64_1, dunpack64_2, dunpack64_3, dunpack64_4,
 	dunpack64_5, dunpack64_6, dunpack64_7, dunpack64_8, dunpack64_9,
 	dunpack64_10, dunpack64_11, dunpack64_12, dunpack64_13, dunpack64_14,
 	dunpack64_15, dunpack64_16, dunpack64_17, dunpack64_18, dunpack64_19,
@@ -266,7 +266,7 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 
 	// Create output data and reinitialize seed
 	copy(seed, iseed)
-	out := makeAlignedBytes(nbytes)
+	out := makeAlignedBytes(nbytes + 1)
 
 	// Compress input data. Process the clusters first.
 	cin = 0

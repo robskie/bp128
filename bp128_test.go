@@ -164,6 +164,27 @@ var getData64 = func() func() []uint64 {
 	return func() []uint64 { return data64 }
 }()
 
+func TestPackUnpackZero(t *testing.T) {
+	data32 := make([]uint32, 2048)
+	data32b := make([]uint32, 2048+128)
+	data64 := make([]uint64, 2048+128+42)
+
+	packed32 := Pack(data32)
+	packed32b := DeltaPack(data32b)
+	packed64 := DeltaPack(data64)
+
+	var out32 []uint32
+	var out32b []uint32
+	var out64 []uint64
+	Unpack(packed32, &out32)
+	Unpack(packed32b, &out32b)
+	Unpack(packed64, &out64)
+
+	assert.Equal(t, data32, out32)
+	assert.Equal(t, data32b, out32b)
+	assert.Equal(t, data64, data64)
+}
+
 func TestPackUnpack32(t *testing.T) {
 	data := getData32()
 

@@ -1,5 +1,6 @@
 package bp128
 
+func unpack32_0(in *byte, out uintptr, offset int, seed *byte) {}
 func unpack32_1(in *byte, out uintptr, offset int, seed *byte)
 func unpack32_2(in *byte, out uintptr, offset int, seed *byte)
 func unpack32_3(in *byte, out uintptr, offset int, seed *byte)
@@ -33,6 +34,7 @@ func unpack32_30(in *byte, out uintptr, offset int, seed *byte)
 func unpack32_31(in *byte, out uintptr, offset int, seed *byte)
 func unpack32_32(in *byte, out uintptr, offset int, seed *byte)
 
+func unpack64_0(in *byte, out uintptr, offset int, seed *byte) {}
 func unpack64_1(in *byte, out uintptr, offset int, seed *byte)
 func unpack64_2(in *byte, out uintptr, offset int, seed *byte)
 func unpack64_3(in *byte, out uintptr, offset int, seed *byte)
@@ -98,6 +100,7 @@ func unpack64_62(in *byte, out uintptr, offset int, seed *byte)
 func unpack64_63(in *byte, out uintptr, offset int, seed *byte)
 func unpack64_64(in *byte, out uintptr, offset int, seed *byte)
 
+func dunpack32_0(in *byte, out uintptr, offset int, seed *byte) {}
 func dunpack32_1(in *byte, out uintptr, offset int, seed *byte)
 func dunpack32_2(in *byte, out uintptr, offset int, seed *byte)
 func dunpack32_3(in *byte, out uintptr, offset int, seed *byte)
@@ -131,6 +134,7 @@ func dunpack32_30(in *byte, out uintptr, offset int, seed *byte)
 func dunpack32_31(in *byte, out uintptr, offset int, seed *byte)
 func dunpack32_32(in *byte, out uintptr, offset int, seed *byte)
 
+func dunpack64_0(in *byte, out uintptr, offset int, seed *byte) {}
 func dunpack64_1(in *byte, out uintptr, offset int, seed *byte)
 func dunpack64_2(in *byte, out uintptr, offset int, seed *byte)
 func dunpack64_3(in *byte, out uintptr, offset int, seed *byte)
