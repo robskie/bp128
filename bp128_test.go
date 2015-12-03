@@ -168,8 +168,8 @@ func TestPackUnpack32(t *testing.T) {
 	data := getData32()
 
 	var out []uint32
-	packed := PackInts(data)
-	UnpackInts(packed, &out)
+	packed := Pack(data)
+	Unpack(packed, &out)
 
 	assert.Equal(t, data, out)
 }
@@ -178,8 +178,8 @@ func TestPackUnpack64(t *testing.T) {
 	data := getData64()
 
 	var out []uint64
-	packed := PackInts(data)
-	UnpackInts(packed, &out)
+	packed := Pack(data)
+	Unpack(packed, &out)
 
 	assert.Equal(t, data, out)
 }
@@ -188,8 +188,8 @@ func TestDeltaPackUnpack32(t *testing.T) {
 	data := getData32()
 
 	var out []uint32
-	packed := DeltaPackInts(data)
-	UnpackInts(packed, &out)
+	packed := DeltaPack(data)
+	Unpack(packed, &out)
 
 	assert.Equal(t, data, out)
 }
@@ -198,8 +198,8 @@ func TestDeltaPackUnpack64(t *testing.T) {
 	data := getData64()
 
 	var out []uint64
-	packed := DeltaPackInts(data)
-	UnpackInts(packed, &out)
+	packed := DeltaPack(data)
+	Unpack(packed, &out)
 
 	assert.Equal(t, data, out)
 }
@@ -207,27 +207,27 @@ func TestDeltaPackUnpack64(t *testing.T) {
 func TestPackedIntsEncDec(t *testing.T) {
 	data := getData32()
 
-	packed1 := PackInts(data)
+	packed1 := Pack(data)
 	enc, _ := packed1.GobEncode()
 
 	packed2 := &PackedInts{}
 	packed2.GobDecode(enc)
 
 	var out []uint32
-	UnpackInts(packed2, &out)
+	Unpack(packed2, &out)
 	assert.Equal(t, data, out)
 }
 
 func TestDeltaPackedIntsEncDec(t *testing.T) {
 	data := getData32()
 
-	packed1 := DeltaPackInts(data)
+	packed1 := DeltaPack(data)
 	enc, _ := packed1.GobEncode()
 
 	packed2 := &PackedInts{}
 	packed2.GobDecode(enc)
 
 	var out []uint32
-	UnpackInts(packed2, &out)
+	Unpack(packed2, &out)
 	assert.Equal(t, data, out)
 }

@@ -167,26 +167,26 @@ func (p *PackedInts) GobDecode(data []byte) error {
 	return nil
 }
 
-// PackInts compresses a given integer slice.
+// Pack compresses a given integer slice.
 // It accepts []int, []uint, []int64, []uint64,
 // []int32, and []uint32 slices.
-func PackInts(in interface{}) *PackedInts {
+func Pack(in interface{}) *PackedInts {
 	return pack(in, false)
 }
 
-// DeltaPackInts compresses a given integer slice
+// DeltaPack compresses a given integer slice
 // using differential coding. Aside from the input
 // requirements of PackInts, the input slice should
 // also be in ascending order.
-func DeltaPackInts(in interface{}) *PackedInts {
+func DeltaPack(in interface{}) *PackedInts {
 	return pack(in, true)
 }
 
-// UnpackInts decompresses the given packed integers.
+// Unpack decompresses the given packed integers.
 // The out parameter should be a pointer to an integer
 // slice that has the same type as the one used when
 // packing.
-func UnpackInts(in *PackedInts, out interface{}) {
+func Unpack(in *PackedInts, out interface{}) {
 	unpack(in, out)
 }
 

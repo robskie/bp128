@@ -180,27 +180,27 @@ func main() {
 	mis := 0
 	const ntrials = 1000
 
-	mis = benchmarkPack(ntrials, chunks32, bp128.PackInts)
+	mis = benchmarkPack(ntrials, chunks32, bp128.Pack)
 	fmtBenchmark("BenchmarkPack32", mis)
 
-	mis = benchmarkUnpack(ntrials, chunks32, bp128.PackInts, bp128.UnpackInts)
+	mis = benchmarkUnpack(ntrials, chunks32, bp128.Pack, bp128.Unpack)
 	fmtBenchmark("BenchmarkUnPack32", mis)
 
-	mis = benchmarkPack(ntrials, chunks32, bp128.DeltaPackInts)
+	mis = benchmarkPack(ntrials, chunks32, bp128.DeltaPack)
 	fmtBenchmark("BenchmarkDeltaPack32", mis)
 
-	mis = benchmarkUnpack(ntrials, chunks32, bp128.DeltaPackInts, bp128.UnpackInts)
+	mis = benchmarkUnpack(ntrials, chunks32, bp128.DeltaPack, bp128.Unpack)
 	fmtBenchmark("BenchmarkDeltaUnPack32", mis)
 
-	mis = benchmarkPack(ntrials, chunks64, bp128.PackInts)
+	mis = benchmarkPack(ntrials, chunks64, bp128.Pack)
 	fmtBenchmark("BenchmarkPack64", mis)
 
-	mis = benchmarkUnpack(ntrials, chunks64, bp128.PackInts, bp128.UnpackInts)
+	mis = benchmarkUnpack(ntrials, chunks64, bp128.Pack, bp128.Unpack)
 	fmtBenchmark("BenchmarkUnPack64", mis)
 
-	mis = benchmarkPack(ntrials, chunks64, bp128.DeltaPackInts)
+	mis = benchmarkPack(ntrials, chunks64, bp128.DeltaPack)
 	fmtBenchmark("BenchmarkDeltaPack64", mis)
 
-	mis = benchmarkUnpack(ntrials, chunks64, bp128.DeltaPackInts, bp128.UnpackInts)
+	mis = benchmarkUnpack(ntrials, chunks64, bp128.DeltaPack, bp128.Unpack)
 	fmtBenchmark("BenchmarkDeltaUnPack64", mis)
 }
