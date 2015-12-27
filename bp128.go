@@ -406,4 +406,7 @@ func unpack(in *PackedInts, out interface{}) {
 		vout = vout.Slice(0, cout)
 		vout = appendBytes(intSize, vout, inBytes[cin:])
 	}
+
+	// Set output
+	outp.Elem().Set(vout.Slice(0, length))
 }
