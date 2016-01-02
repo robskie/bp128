@@ -11,6 +11,10 @@ func isAligned(intSize int, addr uintptr, index int) bool {
 }
 
 func makeAlignedBytes(length int) []byte {
+	if length == 0 {
+		return nil
+	}
+
 	const alignment = 16
 	bytes := make([]byte, length+alignment)
 
