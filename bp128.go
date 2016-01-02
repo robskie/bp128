@@ -12,6 +12,7 @@ package bp128
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"reflect"
 	"unsafe"
 )
@@ -129,21 +130,37 @@ func (p *PackedInts) Size() int {
 	return len(p.bytes)
 }
 
+func checkErr(err ...error) error {
+	for _, e := range err {
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
+}
+
 // GobEncode allows gob encoding of packed integers.
 func (p *PackedInts) GobEncode() ([]byte, error) {
 	buf := &bytes.Buffer{}
 	enc := gob.NewEncoder(buf)
 
-	enc.Encode(p.delta)
-	enc.Encode(p.kind)
-	enc.Encode(p.length)
+	err := checkErr(
+		enc.Encode(p.delta),
+		enc.Encode(p.kind),
+		enc.Encode(p.length),
+		enc.Encode(len(p.bytes)),
+		enc.Encode(len(p.seed)),
 
-	enc.Encode(len(p.bytes))
-	enc.Encode(p.bytes)
-	enc.Encode(len(p.seed))
-	enc.Encode(p.seed)
+		enc.Encode(p.bytes),
+		enc.Encode(p.seed),
+	)
 
-	return buf.Bytes(), nil
+	if err != nil {
+		err = fmt.Errorf("bp128: encode failed (%v)", err)
+	}
+
+	return buf.Bytes(), err
 }
 
 // GobDecode allows gob decoding of packed integers.
@@ -151,18 +168,27 @@ func (p *PackedInts) GobDecode(data []byte) error {
 	buf := bytes.NewReader(data)
 	dec := gob.NewDecoder(buf)
 
-	dec.Decode(&p.delta)
-	dec.Decode(&p.kind)
-	dec.Decode(&p.length)
+	nbytes, nseed := 0, 0
+	err := checkErr(
+		dec.Decode(&p.delta),
+		dec.Decode(&p.kind),
+		dec.Decode(&p.length),
+		dec.Decode(&nbytes),
+		dec.Decode(&nseed),
+	)
+	if err != nil {
+		return fmt.Errorf("bp128: decode failed (%v)", err)
+	}
 
-	nbytes := 0
-	dec.Decode(&nbytes)
 	p.bytes = makeAlignedBytes(nbytes)
-	dec.Decode(&p.bytes)
-
-	dec.Decode(&nbytes)
-	p.seed = makeAlignedBytes(nbytes)
-	dec.Decode(&p.seed)
+	p.seed = makeAlignedBytes(nseed)
+	err = checkErr(
+		dec.Decode(&p.bytes),
+		dec.Decode(&p.seed),
+	)
+	if err != nil {
+		return fmt.Errorf("bp128: decode failed (%v)", err)
+	}
 
 	return nil
 }
