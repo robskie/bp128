@@ -127,7 +127,7 @@ func (p *PackedInts) Len() int {
 
 // Size returns the compressed size in bytes.
 func (p *PackedInts) Size() int {
-	return len(p.bytes)
+	return len(p.bytes) + len(p.seed)
 }
 
 func checkErr(err ...error) error {
