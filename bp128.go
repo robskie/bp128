@@ -258,10 +258,13 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 
 	seed := makeAlignedBytes(16)
 	iseed := makeAlignedBytes(16)
+	if !isDelta {
+		iseed = nil
+	}
 
 	nslice := min(vin.Len(), blockSize/intSize)
-	copy(iseed, convertToBytes(intSize, vin.Slice(0, nslice)))
-	copy(seed, iseed)
+	copy(seed, convertToBytes(intSize, vin.Slice(0, nslice)))
+	copy(iseed, seed)
 
 	if !isAligned(intSize, uintptr(inAddr), 0) {
 		vin = alignSlice(intSize, vin)
@@ -350,8 +353,11 @@ func unpack(in *PackedInts, out interface{}) {
 	inBytes := in.bytes
 	isDelta := in.delta
 
-	seed := makeAlignedBytes(16)
-	copy(seed, in.seed)
+	seed := []byte{0}
+	if isDelta {
+		seed = makeAlignedBytes(16)
+		copy(seed, in.seed)
+	}
 
 	intSize := 0
 	var funpack []func(*byte, uintptr, int, *byte)
