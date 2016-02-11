@@ -34,17 +34,20 @@ func (s intSlice) Swap(i, j int) {
 func testPackUnpackAsm(t *testing.T, intSize, nbits int, isDiffCode bool) bool {
 	fpack := fpack32
 	funpack := funpack32
-	var sliceType interface{}
+	var in interface{}
+	var out interface{}
 	if intSize == 64 {
 		fpack = fpack64
 		funpack = funpack64
-		sliceType = []uint64{}
+		in = &[]uint64{}
+		out = &[]uint64{}
 		if isDiffCode {
 			fpack = fdpack64
 			funpack = fdunpack64
 		}
 	} else if intSize == 32 {
-		sliceType = []uint32{}
+		in = &[]uint32{}
+		out = &[]uint32{}
 		if isDiffCode {
 			fpack = fdpack32
 			funpack = fdunpack32
@@ -52,35 +55,38 @@ func testPackUnpackAsm(t *testing.T, intSize, nbits int, isDiffCode bool) bool {
 	}
 
 	max := 1 << uint(nbits)
-	in := makeAlignedSlice(sliceType, blockSize)
-	out := makeAlignedSlice(sliceType, blockSize)
+	MakeAlignedSlice(blockSize, in)
+	MakeAlignedSlice(blockSize, out)
+
+	vin := reflect.ValueOf(in).Elem()
+	vout := reflect.ValueOf(out).Elem()
 	zip := makeAlignedBytes((nbits * blockSize) / 8)
 
 	for i := 0; i < blockSize; i++ {
 		if nbits < 63 {
-			in.Index(i).SetUint(uint64(rand.Intn(max)))
+			vin.Index(i).SetUint(uint64(rand.Intn(max)))
 		} else {
-			in.Index(i).SetUint(uint64(rand.Int63()))
+			vin.Index(i).SetUint(uint64(rand.Int63()))
 		}
 
 	}
-	sort.Sort(intSlice(in))
+	sort.Sort(intSlice(vin))
 
 	nslice := blockSize / intSize
 	seed := makeAlignedBytes(16)
-	copy(seed, convertToBytes(intSize, in.Slice(0, nslice)))
+	copy(seed, convertToBytes(intSize, vin.Slice(0, nslice)))
 
-	inAddr := in.Pointer()
-	outAddr := out.Pointer()
+	inAddr := vin.Pointer()
+	outAddr := vout.Pointer()
 
 	fpack[nbits](inAddr, &zip[0], 0, &seed[0])
 
-	copy(seed, convertToBytes(intSize, in.Slice(0, nslice)))
+	copy(seed, convertToBytes(intSize, vin.Slice(0, nslice)))
 	funpack[nbits](&zip[0], outAddr, 0, &seed[0])
 
 	equal := false
 	for i := 0; i < blockSize; i++ {
-		equal = assert.Equal(t, in.Index(i).Uint(), out.Index(i).Uint())
+		equal = assert.Equal(t, vin.Index(i).Uint(), vout.Index(i).Uint())
 		if !equal {
 			break
 		}

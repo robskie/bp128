@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	addrAlignment = 16
-
 	// chunkByteSize is the number
 	// of bytes per chunk of data.
 	chunkByteSize = 262144
@@ -68,7 +66,8 @@ func chunkify32(data []int) *chunks {
 
 	n := 0
 	for i := range cdata {
-		chunk := make([]uint32, chunkLen)
+		chunk := []uint32{}
+		bp128.MakeAlignedSlice(chunkLen, &chunk)
 		for j := range chunk {
 			chunk[j] = uint32(data[n])
 			n++
@@ -87,7 +86,8 @@ func chunkify64(data []int) *chunks {
 
 	n := 0
 	for i := range cdata {
-		chunk := make([]uint64, chunkLen)
+		chunk := []uint64{}
+		bp128.MakeAlignedSlice(chunkLen, &chunk)
 		for j := range chunk {
 			chunk[j] = uint64(data[n])
 			n++
@@ -130,11 +130,11 @@ func benchmarkUnpack(trials int,
 
 	var out interface{}
 	if chunks.intSize == 32 {
-		o := make([]uint32, (chunkByteSize/4)+addrAlignment)
-		out = &o
+		out = &[]uint32{}
+		bp128.MakeAlignedSlice(chunkByteSize/4, out)
 	} else if chunks.intSize == 64 {
-		o := make([]uint64, (chunkByteSize/8)+addrAlignment)
-		out = &o
+		out = &[]uint64{}
+		bp128.MakeAlignedSlice(chunkByteSize/8, out)
 	}
 
 	times := make([]int, trials)

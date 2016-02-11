@@ -209,9 +209,11 @@ func (p *PackedInts) GobDecode(data []byte) error {
 	return nil
 }
 
-// Pack compresses a given integer slice.
-// It accepts []int, []uint, []int64, []uint64,
-// []int32, and []uint32 slices.
+// Pack compresses a given integer slice. It accepts []int,
+// []uint, []int64, []uint64, []int32, and []uint32 slices.
+// If in is not aligned, it will be copied to a new aligned
+// slice before packing. To prevent this, use MakeAlignedSlice
+// and put the values in the created slice before calling Pack.
 func Pack(in interface{}) *PackedInts {
 	return pack(in, false)
 }
@@ -224,10 +226,13 @@ func DeltaPack(in interface{}) *PackedInts {
 	return pack(in, true)
 }
 
-// Unpack decompresses the given packed integers.
-// The out parameter should be a pointer to an integer
-// slice that has the same type as the one used when
-// packing.
+// Unpack decompresses the given packed integers. The out
+// parameter should be a pointer to an integer slice that
+// has the same type as the one used when packing. If out
+// is not aligned or has insufficient length to store the
+// unpacked integers, out will be extended to an aligned slice
+// before unpacking. To prevent this, create an aligned slice by
+// calling MakeAlignedSlice and used in.Len() as the length parameter.
 func Unpack(in *PackedInts, out interface{}) {
 	unpack(in, out)
 }
@@ -395,8 +400,7 @@ func unpack(in *PackedInts, out interface{}) {
 		panic("bp128: output is not a pointer to integer slice")
 	}
 
-	outp := reflect.ValueOf(out)
-	vout := outp.Elem()
+	vout := reflect.ValueOf(out).Elem()
 	outAddr := unsafe.Pointer(vout.Pointer())
 	if vout.Type().Elem().Kind() != in.kind {
 		panic("bp128: mismatched input-output type")
@@ -406,16 +410,16 @@ func unpack(in *PackedInts, out interface{}) {
 		if vout.Cap() >= length {
 			vout = vout.Slice(0, length)
 		} else {
-			vout = makeAlignedSlice(vout.Interface(), length)
+			MakeAlignedSlice(length, out)
+
+			vout = reflect.ValueOf(out).Elem()
 			outAddr = unsafe.Pointer(vout.Pointer())
-			outp.Elem().Set(vout)
 		}
 	}
 
 	if !isAligned(intSize, uintptr(outAddr), 0) {
 		vout = alignSlice(intSize, vout)
 		outAddr = unsafe.Pointer(vout.Pointer())
-		outp.Elem().Set(vout)
 	}
 
 	// Process the clusters first
@@ -453,5 +457,5 @@ func unpack(in *PackedInts, out interface{}) {
 	}
 
 	// Set output
-	outp.Elem().Set(vout.Slice(0, length))
+	reflect.ValueOf(out).Elem().Set(vout.Slice(0, length))
 }
