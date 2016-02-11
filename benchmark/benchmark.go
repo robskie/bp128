@@ -12,6 +12,14 @@ import (
 	"github.com/robskie/bp128"
 )
 
+const (
+	addrAlignment = 16
+
+	// chunkByteSize is the number
+	// of bytes per chunk of data.
+	chunkByteSize = 262144
+)
+
 func read(filename string) []int {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -53,15 +61,14 @@ type chunks struct {
 }
 
 func chunkify32(data []int) *chunks {
-	const intSize = 4
-	const chunkSize = 262144 / intSize
+	const chunkLen = chunkByteSize / 4
 
-	nchunks := len(data) / chunkSize
+	nchunks := len(data) / chunkLen
 	cdata := make([]interface{}, nchunks)
 
 	n := 0
 	for i := range cdata {
-		chunk := make([]uint32, chunkSize)
+		chunk := make([]uint32, chunkLen)
 		for j := range chunk {
 			chunk[j] = uint32(data[n])
 			n++
@@ -73,15 +80,14 @@ func chunkify32(data []int) *chunks {
 }
 
 func chunkify64(data []int) *chunks {
-	const intSize = 8
-	const chunkSize = 262144 / intSize
+	const chunkLen = chunkByteSize / 8
 
-	nchunks := len(data) / chunkSize
+	nchunks := len(data) / chunkLen
 	cdata := make([]interface{}, nchunks)
 
 	n := 0
 	for i := range cdata {
-		chunk := make([]uint64, chunkSize)
+		chunk := make([]uint64, chunkLen)
 		for j := range chunk {
 			chunk[j] = uint64(data[n])
 			n++
@@ -123,13 +129,11 @@ func benchmarkUnpack(trials int,
 	}
 
 	var out interface{}
-	const alignment = 16
-	const chunkSize = 262144
 	if chunks.intSize == 32 {
-		o := make([]uint32, (chunkSize/4)+alignment)
+		o := make([]uint32, (chunkByteSize/4)+addrAlignment)
 		out = &o
 	} else if chunks.intSize == 64 {
-		o := make([]uint64, (chunkSize/8)+alignment)
+		o := make([]uint64, (chunkByteSize/8)+addrAlignment)
 		out = &o
 	}
 

@@ -32,8 +32,6 @@ func (s intSlice) Swap(i, j int) {
 }
 
 func testPackUnpackAsm(t *testing.T, intSize, nbits int, isDiffCode bool) bool {
-	const blockSize = 128
-
 	fpack := fpack32
 	funpack := funpack32
 	var sliceType interface{}

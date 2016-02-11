@@ -7,7 +7,7 @@ import (
 
 func isAligned(intSize int, addr uintptr, index int) bool {
 	addr += uintptr(index * (intSize / 8))
-	return addr&15 == 0
+	return addr&(addrAlignment-1) == 0
 }
 
 func makeAlignedBytes(length int) []byte {
@@ -15,8 +15,7 @@ func makeAlignedBytes(length int) []byte {
 		return nil
 	}
 
-	const alignment = 16
-	bytes := make([]byte, length+alignment)
+	bytes := make([]byte, length+addrAlignment)
 
 	idx := 0
 	addr := unsafe.Pointer(&bytes[0])
@@ -42,8 +41,7 @@ func makeAlignedSlice(slice interface{}, n int) reflect.Value {
 		panic("bp128: input is not an integer slice")
 	}
 
-	const alignment = 16
-	offset := (alignment * 8) / intSize
+	offset := (addrAlignment * 8) / intSize
 
 	c := n + offset
 	vslice := reflect.MakeSlice(reflect.TypeOf(slice), c, c)
@@ -58,8 +56,7 @@ func makeAlignedSlice(slice interface{}, n int) reflect.Value {
 }
 
 func alignSlice(intSize int, v reflect.Value) reflect.Value {
-	const alignment = 16
-	offset := (alignment * 8) / intSize
+	offset := (addrAlignment * 8) / intSize
 
 	nslice := v
 	length := v.Len() + offset

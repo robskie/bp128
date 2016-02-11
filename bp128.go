@@ -17,6 +17,22 @@ import (
 	"unsafe"
 )
 
+const (
+	// addrAlignment is the memory address alignment of
+	// input and output data. This is required by some
+	// SIMD instructions.
+	addrAlignment = 16
+
+	// blockSize is the number of integers per block. Each
+	// block address must be aligned at 16-byte boundaries.
+	blockSize = 128
+	numBlocks = addrAlignment
+
+	// clusterSize represents the number of integers
+	// per cluster. Each cluster is composed of 16 blocks.
+	clusterSize = blockSize * numBlocks
+)
+
 var fpack32 = []func(in uintptr, out *byte, inOffset int, seed *byte){
 	pack32_0, pack32_1, pack32_2, pack32_3, pack32_4, pack32_5, pack32_6,
 	pack32_7, pack32_8, pack32_9, pack32_10, pack32_11, pack32_12, pack32_13,
@@ -217,10 +233,6 @@ func Unpack(in *PackedInts, out interface{}) {
 }
 
 func pack(in interface{}, isDelta bool) *PackedInts {
-	const nblocks = 16
-	const blockSize = 128
-	const clusterSize = blockSize * nblocks
-
 	vin := reflect.ValueOf(in)
 	inAddr := unsafe.Pointer(vin.Pointer())
 	if vin.Kind() != reflect.Slice {
@@ -271,14 +283,19 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 		inAddr = unsafe.Pointer(vin.Pointer())
 	}
 
-	// Determine the number of bytes to allocate
+	// Determine the number of bytes to allocate.
+	// For each cluster, allocate 16 bytes to store
+	// the bit sizes of each block.
 	length := vin.Len()
 	nclusters := length / clusterSize
-	nbytes := nclusters * nblocks
+	nbytes := nclusters * numBlocks
 	if length-(nclusters*clusterSize) >= blockSize {
-		nbytes += nblocks
+		// Allocate another 16 bytes for overflow
+		// greater than or equal to blockSize.
+		nbytes += numBlocks
 	}
 
+	// Allocate bytes to store the packed integers.
 	cin := 0
 	bitSizes := make([]uint8, 0, (length/blockSize)+1)
 	for ; length >= blockSize; length -= blockSize {
@@ -302,11 +319,11 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 	cout := 0
 	length = vin.Len()
 	for cin+clusterSize <= length {
-		bs := bitSizes[:nblocks]
-		bitSizes = bitSizes[nblocks:]
+		bs := bitSizes[:numBlocks]
+		bitSizes = bitSizes[numBlocks:]
 
 		copy(out[cout:], bs)
-		cout += nblocks
+		cout += numBlocks
 
 		for _, sz := range bs {
 			fpack[sz](uintptr(inAddr), &out[cout], cin, &seed[0])
@@ -319,7 +336,7 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 	// Process the remaining blocks
 	if cin+blockSize <= length {
 		copy(out[cout:], bitSizes)
-		cout += nblocks
+		cout += numBlocks
 
 		for _, sz := range bitSizes {
 			fpack[sz](uintptr(inAddr), &out[cout], cin, &seed[0])
@@ -345,10 +362,6 @@ func pack(in interface{}, isDelta bool) *PackedInts {
 }
 
 func unpack(in *PackedInts, out interface{}) {
-	const nblocks = 16
-	const blockSize = 128
-	const clusterSize = blockSize * nblocks
-
 	length := in.length
 	inBytes := in.bytes
 	isDelta := in.delta
@@ -409,8 +422,8 @@ func unpack(in *PackedInts, out interface{}) {
 	cin := 0
 	cout := 0
 	for cout+clusterSize <= length {
-		bitSizes := inBytes[cin : cin+nblocks]
-		cin += nblocks
+		bitSizes := inBytes[cin : cin+numBlocks]
+		cin += numBlocks
 
 		for _, sz := range bitSizes {
 			funpack[sz](&inBytes[cin], uintptr(outAddr), cout, &seed[0])
@@ -423,7 +436,7 @@ func unpack(in *PackedInts, out interface{}) {
 	// Process the remaining blocks
 	if cout+blockSize <= length {
 		bitSizes := inBytes[cin : cin+((length-cout)/blockSize)]
-		cin += nblocks
+		cin += numBlocks
 
 		for _, sz := range bitSizes {
 			funpack[sz](&inBytes[cin], uintptr(outAddr), cout, &seed[0])
